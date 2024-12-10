@@ -16,16 +16,26 @@ services:
       - ./server:/app
     working_dir: /app
 
-  # nginx:
-  #   image: nginx:latest
-  #   ports:
-  #     - "80:80"
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf
-  #   depends_on:
-  #     - backend
-  #   networks:
-  #     - app-network
+  nginx:
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - app-network
+    depends_on:
+      - application
+    command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   jenkins:
     image: jenkins/jenkins:lts

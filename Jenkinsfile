@@ -23,6 +23,13 @@ pipeline {
             }
         }
 
+        stage('Build TypeScript') {
+            steps {
+                // TypeScript 코드를 JavaScript로 빌드
+                sh 'npm run build'
+            }
+        }
+
         stage('Run Tests') {
             steps {
                 // 테스트 실행
@@ -52,10 +59,15 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                // 서버로 Docker 이미지를 배포
+                // 서버로 Docker Compose를 사용하여 애플리케이션 배포
                 sshagent(['ssh-server-credentials']) {
                     sh """
-                    ssh ${SERVER_USER}@${SERVER_IP} "docker pull ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER} && docker stop ${DOCKER_IMAGE} || true && docker rm ${DOCKER_IMAGE} || true && docker run -d --name ${DOCKER_IMAGE} -p 3000:3000 ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                    ssh ${SERVER_USER}@${SERVER_IP} "
+                        cd /path/to/your/docker-compose-directory && \
+                        docker-compose pull && \
+                        docker-compose down && \
+                        docker-compose up -d
+                    "
                     """
                 }
             }
