@@ -17,6 +17,7 @@ services:
     working_dir: /app
 
   nginx:
+    image: nginx:latest
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./data/certbot/conf:/etc/letsencrypt
@@ -27,7 +28,7 @@ services:
     networks:
       - app-network
     depends_on:
-      - application
+      - backend
     command: '/bin/sh -c ''while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'''
 
   certbot:
