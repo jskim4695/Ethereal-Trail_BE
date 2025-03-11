@@ -7,6 +7,10 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
     image: ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
     ports:
       - "3000:3000"
@@ -15,6 +19,24 @@ services:
     volumes:
       - ./server:/app
     working_dir: /app
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: always
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   nginx:
     image: nginx:latest
@@ -71,6 +93,7 @@ services:
 volumes:
   jenkins_home:
   grafana_data:
+  redis_data:
 
 networks:
   app-network:

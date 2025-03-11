@@ -1,12 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl", "linux-musl-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl"]
 }
 
 datasource db {
@@ -14,9 +8,118 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Score {
-  id    Int    @id @default(autoincrement())
-  name  String
-  score Int
-  createdAt DateTime @default(now()) 
+model User {
+  id           Int            @id @default(autoincrement())
+  steamId      String         @unique @map("steam_id")
+  nickname     String         @unique
+  aether       Int            @default(0)
+  items        Json?
+  icon         String?        @map("avatarPath")
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  achievements Achievements[]
+  gameData     GameData?
+  hallOfFame   HallOfFame?
+  playTimes    PlayTimes?
+  rankings     Rankings?
+}
+
+model GameData {
+  id              Int              @id @default(autoincrement())
+  userId          Int              @unique @map("user_id")
+  stageReached    Int              @map("stage_reached")
+  talents         Json
+  hardshipStack   Int              @default(0)
+  savedAt         DateTime         @default(now()) @map("saved_at")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  gamePlayRecords GamePlayRecord[]
+  saveData        SaveData?
+}
+
+model SaveData {
+  id            Int      @id @default(autoincrement())
+  gameDataId    Int      @unique @map("game_data_id")
+  gamingTime    DateTime
+  health        Int
+  mana          Int
+  character     Int
+  skin          Int
+  changerNumber Json
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  gameData      GameData @relation(fields: [gameDataId], references: [id], onDelete: Cascade)
+}
+
+model GamePlayRecord {
+  id            Int      @id @default(autoincrement())
+  gameDataId    Int      @map("game_data_id")
+  tagIndex      Int      @default(0)  // 활성화된 태그
+  tagDamage     Int      @default(0)
+  totalDamage   Int      @default(0)
+  clearTime     DateTime
+  retryNumber   Int      @default(0)  // 재도전횟수
+  revivalNumber Int      @default(0)  // 부활횟수
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  gameData      GameData @relation(fields: [gameDataId], references: [id], onDelete: Cascade)
+
+  @@index([gameDataId], map: "GamePlayRecord_game_data_id_fkey")
+}
+
+model Achievements {
+  id            Int             @id @default(autoincrement())
+  userId        Int             @map("user_id")
+  achievementId Int             @map("achievement_id")
+  isAchieved    Boolean         @default(false)
+  progress      Int             @default(0)
+  achievedAt    DateTime?       @default(now()) @map("achieved_at")
+  achievement   AchievementList @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([achievementId], map: "Achievements_achievement_id_fkey")
+  @@index([userId], map: "Achievements_user_id_fkey")
+}
+
+model AchievementList {
+  id           Int            @id @default(autoincrement())
+  name         String
+  description  String
+  required     Int?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  achievements Achievements[]
+}
+
+model PlayTimes {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique @map("user_id")
+  steamPlaytime Int      @map("steam_playtime")
+  inGameTime    Int      @map("in_game_time")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Rankings {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique @map("user_id")
+  ranking       Int
+  rankUpdatedAt DateTime @updatedAt @map("rank_updated_at")
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model HallOfFame {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @unique @map("user_id")
+  fameRank  Int      @map("fame_rank")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

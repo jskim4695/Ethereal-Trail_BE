@@ -2,10 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "${DOCKER_IMAGE_NAME}" // Docker 이미지 이름
+        DOCKER_IMAGE = "jskim4695/ethereal_trail" // Docker 이미지 이름
         DOCKER_REGISTRY = "docker.io/jskim4695/ethereal_trail" // Docker Registry URL
-        SERVER_USER = "ubuntu"
-        SERVER_IP = "43.201.54.1"
+        DEPLOY_DIR = "/Ethereal-Trail_BE"
     }
 
     stages {
@@ -32,8 +31,12 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                // 테스트 실행
-                sh 'npm test'
+                script {
+                    def status = sh(script: 'npm test', returnStatus: true)
+                    if (status != 0) {
+                        error "Tests failed with status ${status}"
+                    }
+                }
             }
         }
 
@@ -47,9 +50,9 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 // Docker 이미지를 Registry에 푸시
-                withCredentials([string(credentialsId: 'docker-registry-credentials', variable: 'DOCKER_PASSWORD')]) {
+                withCredentials([string(credentialsId: 'docker-registry-credentials', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
                     sh """
-                    echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u your-docker-username --password-stdin
+                    echo ${DOCKER_PASSWORD} | docker login ${DOCKER_REGISTRY} -u ${DOCKER_USERNAME} --password-stdin
                     docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER}
                     docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE}:${BUILD_NUMBER}
                     """
@@ -59,21 +62,15 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                // 서버로 Docker Compose를 사용하여 애플리케이션 배포
-                sshagent(['ssh-server-credentials']) {
-                    sh """
-                    ssh ${SERVER_USER}@${SERVER_IP} "
-                        cd /path/to/your/docker-compose-directory && \
-                        docker-compose pull && \
-                        docker-compose down && \
-                        docker-compose up -d
-                    "
-                    """
-                }
+                sh """
+                cd ${DEPLOY_DIR}
+                docker-compose pull
+                docker-compose down
+                docker-compose up -d
+                """
             }
         }
     }
-
     post {
         always {
             // 빌드 로그 압축 및 저장
