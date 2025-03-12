@@ -86,7 +86,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // 기본 엔드포인트
 app.get('/', (req: Request, res: Response) => {
-  res.send('Hello BE Server!');
+  res.send('Hello BE Jenkins Server!');
 });
 
 app.use(express.json());
