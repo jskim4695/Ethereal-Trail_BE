@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true, // CommonJS와 ESModule 호환
+    "skipLibCheck": true,
+    "strict": false, // 엄격한 타입 검사
+    "resolveJsonModule": true, // JSON 파일 임포트 가능
+    "outDir": "./dist", // 빌드된 파일 위치
+    "baseUrl": "src", // 경로 설정
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"] // TODO 스팀-제거필요
+  },
+  "include": [
+    "src/**/*.ts", // TypeScript 파일들 포함
+    "src/utils/prisma/index.ts",
+    "src/utils/prisma/index.ts"
+  ]
+}
