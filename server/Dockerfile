@@ -13,6 +13,8 @@ WORKDIR /app
 COPY package.json ./
 
 RUN npm install
+# 시간대 데이터 패키지 설치
+RUN apk add tzdata
 # 파일 접근 권한 옵션 추가
 COPY --chown=node:node . .
 # 프리즈마 제너레이트 스트립트
